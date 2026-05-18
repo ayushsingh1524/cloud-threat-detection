@@ -1,0 +1,38 @@
+title: Suspicious IAM Privilege Escalation
+id: 9a7b93b2-6529-4171-8cc4-e91b15c90772
+status: experimental
+description: Detects AWS IAM actions that could allow a user to escalate their privileges.
+author: Cloud Threat Detection Team
+logsource:
+  product: aws
+  service: cloudtrail
+
+detection:
+  selection:
+    eventName:
+      - AttachUserPolicy
+      - PutUserPolicy
+      - AttachRolePolicy
+      - PutRolePolicy
+      - CreateAccessKey
+      - CreateLoginProfile
+      - UpdateLoginProfile
+  condition: selection
+
+level: high
+
+tags:
+  - attack.privilege_escalation
+  - attack.t1098
+
+falsepositives:
+  - Legitimate IAM administration by authorized DevOps or Security teams.
+
+sql_mapping:
+  query: |
+    SELECT event_time, user_identity, event_name, source_ip, aws_region
+    FROM cloudtrail_logs_normalized
+    WHERE event_name IN (
+      'AttachUserPolicy', 'PutUserPolicy', 'AttachRolePolicy',
+      'PutRolePolicy', 'CreateAccessKey', 'CreateLoginProfile', 'UpdateLoginProfile'
+    )

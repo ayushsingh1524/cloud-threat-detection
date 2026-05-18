@@ -1,0 +1,31 @@
+title: Account Compromise - Unauthorized Login
+id: c38a5b29-1a3b-4873-9a7c-47a3e9c8f0a2
+status: experimental
+description: Detects multiple failed login attempts followed by a successful login, or login without MFA.
+author: Cloud Threat Detection Team
+logsource:
+  product: aws
+  service: cloudtrail
+
+detection:
+  selection:
+    eventName:
+      - ConsoleLogin
+  condition: selection
+
+level: critical
+
+tags:
+  - attack.valid_accounts
+  - attack.t1078
+
+falsepositives:
+  - User forgotten password and subsequent recovery.
+  - Temporary MFA bypass for break-glass accounts.
+
+sql_mapping:
+  query: |
+    SELECT event_time, user_identity, source_ip, aws_region
+    FROM cloudtrail_logs_normalized
+    WHERE event_name = 'ConsoleLogin'
+    AND JSON_EXTRACT_PATH_TEXT(raw_event, 'responseElements', 'ConsoleLogin') != 'Success'

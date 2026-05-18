@@ -1,0 +1,35 @@
+name: Detection CI
+
+on:
+  push:
+    paths:
+      - 'src/detections/**.yml'
+      - '.github/workflows/detection-ci.yml'
+  pull_request:
+    paths:
+      - 'src/detections/**.yml'
+
+jobs:
+  validate-detections:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install -r requirements.txt
+          python3 -m pip install yamale
+
+      - name: Validate YAML syntax
+        env:
+          PYTHONPATH: .
+        run: |
+          for file in src/detections/*.yml; do
+            python3 src/ci_cd/rule_validator.py "$file"
+          done

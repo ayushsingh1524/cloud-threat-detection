@@ -1,0 +1,32 @@
+title: Suspicious Data Exfiltration from S3
+id: 4f9d2a1b-7c83-4e56-b9a1-028d7e6f3c5b
+status: experimental
+description: Detects unusual mass downloads or syncs from S3 buckets indicative of data exfiltration.
+author: Cloud Threat Detection Team
+logsource:
+  product: aws
+  service: cloudtrail
+
+detection:
+  selection:
+    eventName:
+      - GetObject
+      - ListObjects
+  condition: selection
+
+level: high
+
+tags:
+  - attack.exfiltration
+  - attack.t1530
+
+falsepositives:
+  - Legitimate data backups or ETL jobs.
+
+sql_mapping:
+  query: |
+    SELECT event_time, user_identity, source_ip, resource, count(*) as event_count
+    FROM cloudtrail_logs_normalized
+    WHERE event_name = 'GetObject'
+    GROUP BY event_time, user_identity, source_ip, resource
+    HAVING count(*) > 100
